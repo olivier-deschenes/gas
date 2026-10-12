@@ -73,7 +73,7 @@ export function MapChrome() {
 
       <div
         ref={sheetRef}
-        className="pointer-events-auto w-full border bg-background shadow-xl shadow-black/10 lg:max-w-sm"
+        className="pointer-events-auto w-full border bg-background shadow-xl shadow-black/10 lg:absolute lg:top-4 lg:right-4 lg:w-96"
       >
         {station ? <StationDetail id={station} /> : <NearbyCard />}
       </div>

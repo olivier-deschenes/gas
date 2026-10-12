@@ -64,5 +64,6 @@
   "show_on_map": "Show on map",
   "prices_heading": "Prices",
   "screen_on": "Screen stays on",
-  "median_short": "med."
+  "median_short": "med.",
+  "stations_count_one": "{count} station"
 }

@@ -6,7 +6,10 @@ import { m } from '#/paraglide/messages'
 export function MapLegend({ className }: { className?: string }) {
   return (
     <div
-      className={cn('flex items-center gap-2 text-[11px] text-muted-foreground', className)}
+      className={cn(
+        'flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] whitespace-nowrap text-muted-foreground',
+        className,
+      )}
       aria-label={m.legend_title()}
     >
       <span>{m.legend_cheaper()}</span>

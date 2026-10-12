@@ -184,7 +184,15 @@ export function StationMap() {
       id={MAP_ID}
       mapLib={maplibregl}
       ref={mapRef}
-      initialViewState={{ bounds: INITIAL_BOUNDS }}
+      initialViewState={{
+        bounds: INITIAL_BOUNDS,
+        // Chrome isn't measured yet on first paint; approximate its footprint.
+        fitBoundsOptions: {
+          padding: matchMedia('(min-width: 1024px)').matches
+            ? mapPadding()
+            : { top: 140, bottom: 300, left: 16, right: 16 },
+        },
+      }}
       mapStyle={STYLES[theme]}
       style={{ position: 'absolute', inset: 0 }}
       attributionControl={false}

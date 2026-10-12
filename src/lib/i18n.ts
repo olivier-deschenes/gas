@@ -1,3 +1,4 @@
+import { getLocale } from '#/paraglide/runtime'
 import { m } from '#/paraglide/messages'
 import type { Fuel, Station } from './stations'
 
@@ -19,4 +20,13 @@ export function stationTitle(s: Station) {
 
 export function stationSubtitle(s: Station) {
   return s.brand && s.name !== s.brand ? s.name : null
+}
+
+/** "1 station" / "2 462 stations", with locale plural rules and grouping. */
+export function stationsCount(count: number) {
+  const locale = getLocale()
+  const formatted = new Intl.NumberFormat(locale).format(count)
+  return new Intl.PluralRules(locale).select(count) === 'one'
+    ? m.stations_count_one({ count: formatted })
+    : m.stations_count({ count: formatted })
 }

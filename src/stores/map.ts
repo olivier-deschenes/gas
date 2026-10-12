@@ -15,5 +15,7 @@ export const mapStore = createStore<{
 
 export function mapPadding() {
   const { top, bottom } = mapStore.state.insets
-  return { top: top + 24, bottom: bottom + 24, left: 32, right: 32 }
+  // On wide screens the card floats top-right over the map instead.
+  const wide = typeof window !== 'undefined' && matchMedia('(min-width: 1024px)').matches
+  return { top: top + 24, bottom: bottom + 24, left: 32, right: wide ? 32 + 384 + 16 : 32 }
 }

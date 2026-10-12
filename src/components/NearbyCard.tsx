@@ -8,6 +8,7 @@ import { useAppSearch, useSetSearch } from '#/hooks/use-app-search'
 import { useFuelStats, useStations } from '#/hooks/use-stations'
 import { formatPrice } from '#/lib/format'
 import { cheapestInBounds, cheapestNear } from '#/lib/pricing'
+import { stationsCount } from '#/lib/i18n'
 import { cn } from '#/lib/utils'
 import { mapStore } from '#/stores/map'
 import { RADII_KM, locationStore, setRadius, startDriving, stopDriving } from '#/stores/location'
@@ -74,7 +75,7 @@ export function NearbyCard() {
         )}
         {result && (
           <p className="truncate text-xs text-muted-foreground tabular-nums">
-            {m.stations_count({ count: result.considered })}
+            {stationsCount(result.considered)}
             {fix && result.localMedian != null && (
               <> · {m.median_short()} {formatPrice(result.localMedian, locale)}</>
             )}

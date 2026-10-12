@@ -7,6 +7,7 @@ import { z } from 'zod'
 
 import { AppHeader } from '#/components/AppHeader'
 import { MapChrome } from '#/components/MapChrome'
+import { Panel } from '#/components/Panel'
 import { StationMap } from '#/components/map/StationMap'
 import { Button } from '#/components/ui/button'
 import { Skeleton } from '#/components/ui/skeleton'
@@ -60,6 +61,7 @@ function App() {
           )}
         >
           <AppHeader className="border-b p-3 pt-[max(env(safe-area-inset-top),0.75rem)]" />
+          <Panel />
         </aside>
         <main
           className="relative min-w-0 flex-1"
