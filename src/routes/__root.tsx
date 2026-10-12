@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import {
   HeadContent,
+  ScriptOnce,
   Scripts,
   createRootRouteWithContext,
 } from '@tanstack/react-router'
@@ -7,8 +9,12 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
+import { Toaster } from '#/components/ui/sonner'
+import { TooltipProvider } from '#/components/ui/tooltip'
+import { initTheme, themeScript } from '#/stores/theme'
 
 import { getLocale } from '#/paraglide/runtime'
+import { m } from '#/paraglide/messages'
 
 import appCss from '../styles.css?url'
 
@@ -20,8 +26,6 @@ interface MyRouterContext {
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async () => {
-    // Other redirect strategies are possible; see
-    // https://github.com/TanStack/router/tree/main/examples/react/i18n-paraglide#offline-redirect
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('lang', getLocale())
     }
@@ -29,39 +33,47 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
   head: () => ({
     meta: [
-      {
-        charSet: 'utf-8',
-      },
+      { charSet: 'utf-8' },
       {
         name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
+        content:
+          'width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content',
       },
+      { title: `${m.app_name()} — ${m.app_description()}` },
+      { name: 'description', content: m.app_description() },
+      { name: 'theme-color', content: '#ffffff' },
+      { name: 'mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-capable', content: 'yes' },
       {
-        title: 'TanStack Start Starter',
+        name: 'apple-mobile-web-app-status-bar-style',
+        content: 'black-translucent',
       },
+      { name: 'apple-mobile-web-app-title', content: m.app_name() },
     ],
     links: [
-      {
-        rel: 'stylesheet',
-        href: appCss,
-      },
+      { rel: 'stylesheet', href: appCss },
+      { rel: 'manifest', href: '/manifest.webmanifest' },
+      { rel: 'icon', href: '/icon.svg', type: 'image/svg+xml' },
+      { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
     ],
   }),
   shellComponent: RootDocument,
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  useEffect(() => initTheme(), [])
+
   return (
-    <html lang={getLocale()}>
+    <html lang={getLocale()} suppressHydrationWarning>
       <head>
         <HeadContent />
+        <ScriptOnce children={themeScript} />
       </head>
       <body>
-        {children}
+        <TooltipProvider delayDuration={400}>{children}</TooltipProvider>
+        <Toaster position="top-center" />
         <TanStackDevtools
-          config={{
-            position: 'bottom-right',
-          }}
+          config={{ position: 'bottom-left', hideUntilHover: true }}
           plugins={[
             {
               name: 'Tanstack Router',
