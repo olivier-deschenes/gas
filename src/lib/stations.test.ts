@@ -52,6 +52,13 @@ describe('normalizeStations', () => {
     expect(stations[0].city).toBe('Laval')
   })
 
+  it('tidies all-caps city names', () => {
+    const { stations } = normalizeStations(
+      feed([feature({ Address: '2 rue B, SAINT-JEAN-SUR-RICHELIEU' })]),
+    )
+    expect(stations[0].city).toBe('Saint-Jean-sur-Richelieu')
+  })
+
   it('drops rows outside Quebec', () => {
     const { stations } = normalizeStations(feed([feature({}, [0, 0]), feature({ Address: '2 rue B, Laval' })]))
     expect(stations).toHaveLength(1)

@@ -1,9 +1,9 @@
 import { queryOptions } from '@tanstack/react-query'
-import { getStations } from './stations.functions'
+import { fetchStations } from './stations'
 
 export const stationsQueryOptions = queryOptions({
   queryKey: ['stations'],
-  queryFn: () => getStations(),
+  queryFn: ({ signal }) => fetchStations(signal),
   staleTime: 60_000,
   refetchInterval: 5 * 60_000,
   refetchOnWindowFocus: true,

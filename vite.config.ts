@@ -12,7 +12,13 @@ import { cloudflare } from '@cloudflare/vite-plugin'
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
-    devtools(),
+    devtools({
+      // react-map-gl forwards props to MapLibre, which rejects unknown keys.
+      injectSource: {
+        enabled: true,
+        ignore: { components: ['Map', 'Source', 'Layer', 'Marker'] },
+      },
+    }),
     paraglideVitePlugin({
       project: './project.inlang',
       outdir: './src/paraglide',

@@ -37,6 +37,7 @@
   --tier-4: #dc4a32;
   --tier-none: #d4d4d4;
   --map-halo: #ffffff;
+  --map-text: #171717;
   --user: #0a72ef;
 }
 
@@ -68,6 +69,7 @@
   --tier-4: #f0654f;
   --tier-none: #404040;
   --map-halo: #171717;
+  --map-text: #fafafa;
   --user: #3b9bff;
 }
 
@@ -138,4 +140,9 @@
 }
 .dark .maplibregl-ctrl-attrib a {
   color: #d4d4d4;
+}
+
+/* Keep map controls clear of the bottom sheet. */
+.maplibregl-ctrl-bottom-right {
+  bottom: var(--inset-bottom, 0px);
 }

@@ -78,6 +78,18 @@ function slugify(value: string) {
     .replace(/^-|-$/g, '')
 }
 
+const PARTICLES = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'sur', 'en', 'aux', 'et'])
+
+/** "SAINT-JEAN-SUR-RICHELIEU" → "Saint-Jean-sur-Richelieu"; mixed case is kept. */
+function tidyCase(value: string) {
+  if (value !== value.toUpperCase()) return value
+  return value
+    .toLowerCase()
+    .replace(/\p{L}+/gu, (word, offset: number) =>
+      offset > 0 && PARTICLES.has(word) ? word : word[0].toUpperCase() + word.slice(1),
+    )
+}
+
 function cleanBrand(brand: string | null | undefined) {
   const trimmed = brand?.trim()
   if (!trimmed || trimmed.toLowerCase() === 'aucun') return null
@@ -120,7 +132,7 @@ export function normalizeStations(input: unknown): StationsData {
       name: p.Name?.trim() || cleanBrand(p.brand) || address,
       brand: cleanBrand(p.brand),
       address,
-      city: comma >= 0 ? address.slice(comma + 1).trim() : '',
+      city: comma >= 0 ? tidyCase(address.slice(comma + 1).trim()) : '',
       postalCode,
       region: p.Region?.trim() || '—',
       lng,
@@ -130,4 +142,25 @@ export function normalizeStations(input: unknown): StationsData {
   }
 
   return { generatedAt: data.metadata.generated_at, stations }
+}
+
+async function readJson(res: Response): Promise<unknown> {
+  const bytes = new Uint8Array(await res.arrayBuffer())
+  // The blob is normally served with `content-encoding: gzip` and decoded by
+  // fetch; fall back to manual decompression if it ever arrives raw.
+  if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))
+    return new Response(stream).json()
+  }
+  return JSON.parse(new TextDecoder().decode(bytes))
+}
+
+/**
+ * The Régie serves the feed from a CDN with open CORS and a 60 s cache, so
+ * the browser fetches it directly.
+ */
+export async function fetchStations(signal?: AbortSignal): Promise<StationsData> {
+  const res = await fetch(SOURCE_URL, { signal })
+  if (!res.ok) throw new Error(`Price feed responded ${res.status}`)
+  return normalizeStations(await readJson(res))
 }
