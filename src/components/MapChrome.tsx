@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react'
 import { IconX } from '@tabler/icons-react'
 import { AppHeader } from '#/components/AppHeader'
+import { LocateButton } from '#/components/LocateButton'
 import { NearbyCard } from '#/components/NearbyCard'
 import { StationDetail } from '#/components/StationDetail'
 import { Button } from '#/components/ui/button'
 import { useAppSearch, useSetSearch } from '#/hooks/use-app-search'
+import { useGeoErrorToasts } from '#/hooks/use-geo-error-toasts'
 import { mapStore } from '#/stores/map'
 import { m } from '#/paraglide/messages'
 
@@ -40,6 +42,7 @@ export function MapChrome() {
   const sheetRef = useRef<HTMLDivElement>(null)
   useInset(headerRef, 'top')
   useInset(sheetRef, 'bottom')
+  useGeoErrorToasts()
 
   return (
     <div
@@ -64,9 +67,13 @@ export function MapChrome() {
         </div>
       )}
 
+      <div className="pointer-events-auto mt-auto mb-2 self-end">
+        <LocateButton />
+      </div>
+
       <div
         ref={sheetRef}
-        className="pointer-events-auto mt-auto w-full border bg-background shadow-xl shadow-black/10 lg:max-w-sm"
+        className="pointer-events-auto w-full border bg-background shadow-xl shadow-black/10 lg:max-w-sm"
       >
         {station ? <StationDetail id={station} /> : <NearbyCard />}
       </div>

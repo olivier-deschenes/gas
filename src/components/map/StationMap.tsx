@@ -11,6 +11,7 @@ import { useAppSearch, useSetSearch } from '#/hooks/use-app-search'
 import { getFuelStats, useStations } from '#/hooks/use-stations'
 import { formatPrice } from '#/lib/format'
 import { mapPadding, mapStore } from '#/stores/map'
+import { locationStore, setFollow } from '#/stores/location'
 import { themeStore } from '#/stores/theme'
 import { getLocale } from '#/paraglide/runtime'
 import type { Bounds } from '#/lib/geo'
@@ -27,6 +28,7 @@ import {
   starLayer,
 } from './layers'
 import { drawPill, readPalette } from './palette'
+import { UserMarker } from './UserMarker'
 
 const STYLES = {
   light: 'https://tiles.openfreemap.org/styles/positron',
@@ -66,6 +68,10 @@ export function StationMap() {
   // Symbol layers wait for their pill images so no tile is laid out without them.
   const [pillsFor, setPillsFor] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const fix = useSelector(locationStore, (s) => s.fix)
+  const driving = useSelector(locationStore, (s) => s.driving)
+  const follow = useSelector(locationStore, (s) => s.follow)
+  const followingRef = useRef(false)
 
   // CSS tokens change with the theme class; re-read them when it flips.
   const palette = useMemo(() => readPalette(), [theme])
@@ -116,6 +122,32 @@ export function StationMap() {
     // Re-frame only when the region itself changes, not on fuel switches.
   }, [loaded, region])
 
+  // Drive mode: keep the user in frame, heading-up once they're moving.
+  useEffect(() => {
+    const map = mapRef.current
+    const tracking = loaded && driving && follow && fix != null
+    const started = tracking && !followingRef.current
+    followingRef.current = tracking
+    if (!map || !tracking) return
+    const moving = fix.speed != null && fix.speed >= 3 && fix.heading != null
+    map.easeTo({
+      center: [fix.lng, fix.lat],
+      zoom: started ? Math.max(map.getZoom(), 14) : undefined,
+      bearing: moving ? fix.heading! : map.getBearing(),
+      padding: mapPadding(),
+      duration: started ? 1200 : 900,
+      essential: true,
+    })
+  }, [loaded, driving, follow, fix])
+
+  // Back to north-up when leaving drive mode.
+  useEffect(() => {
+    const map = mapRef.current
+    if (loaded && map && !driving && map.getBearing() !== 0) {
+      map.easeTo({ bearing: 0, duration: 600 })
+    }
+  }, [loaded, driving])
+
   const syncView = (e: { target: MapLibreMap }) => {
     const map = e.target
     const b = map.getBounds()
@@ -165,6 +197,8 @@ export function StationMap() {
       onMouseLeave={() => setHovering(false)}
       onClick={onClick}
       onLoad={(e) => {
+        // Bearing is ours to set (heading-up); two-finger twists only zoom.
+        e.target.touchZoomRotate.disableRotation()
         addPills(e.target)
         // A theme switch swaps the style, which drops custom images.
         e.target.on('style.load', () => addPills(e.target))
@@ -172,14 +206,16 @@ export function StationMap() {
         setLoaded(true)
       }}
       onMoveEnd={syncView}
+      onDragStart={() => setFollow(false)}
     >
-      <AttributionControl compact position="bottom-right" />
+      <AttributionControl compact position="bottom-left" />
       <Source id={SOURCE_ID} type="geojson" data={data}>
         <Layer {...circleLayer(palette, region)} />
         <Layer {...selectedLayer(palette, station)} />
         {pillsFor === theme && <Layer {...labelLayer(palette, theme, region)} />}
         {pillsFor === theme && <Layer {...starLayer(theme, region)} />}
       </Source>
+      {fix && <UserMarker fix={fix} />}
     </Map>
   )
 }

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { createFileRoute, stripSearchParams } from '@tanstack/react-router'
 import { useSelector } from '@tanstack/react-store'
 import { MapProvider } from 'react-map-gl/maplibre'
@@ -12,6 +13,8 @@ import { Skeleton } from '#/components/ui/skeleton'
 import { FUELS } from '#/lib/stations'
 import { stationsQueryOptions } from '#/lib/stations.query'
 import { cn } from '#/lib/utils'
+import { useWakeLock } from '#/hooks/use-wake-lock'
+import { initLocation, locationStore } from '#/stores/location'
 import { mapStore } from '#/stores/map'
 import { m } from '#/paraglide/messages'
 
@@ -41,6 +44,11 @@ export const Route = createFileRoute('/')({
 function App() {
   const { view } = Route.useSearch()
   const insetBottom = useSelector(mapStore, (s) => s.insets.bottom)
+  const driving = useSelector(locationStore, (s) => s.driving)
+  useWakeLock(driving)
+  useEffect(() => {
+    void initLocation()
+  }, [])
 
   return (
     <MapProvider>

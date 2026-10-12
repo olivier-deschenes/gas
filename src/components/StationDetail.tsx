@@ -2,9 +2,12 @@ import { IconX } from '@tabler/icons-react'
 import { DirectionsButton } from '#/components/DirectionsButton'
 import { RegionStar, TierBar } from '#/components/TierMark'
 import { Button } from '#/components/ui/button'
+import { useSelector } from '@tanstack/react-store'
 import { useAppSearch, useSetSearch } from '#/hooks/use-app-search'
 import { useFuelStats, useStations } from '#/hooks/use-stations'
 import { formatCents, formatPrice } from '#/lib/format'
+import { distanceKm, formatDistance } from '#/lib/geo'
+import { locationStore } from '#/stores/location'
 import { fuelLabel, stationSubtitle, stationTitle } from '#/lib/i18n'
 import { FUELS } from '#/lib/stations'
 import { cn } from '#/lib/utils'
@@ -17,6 +20,7 @@ export function StationDetail({ id, children }: { id: string; children?: React.R
   const setSearch = useSetSearch()
   const stats = useFuelStats(fuel)
   const locale = getLocale()
+  const fix = useSelector(locationStore, (s) => s.fix)
 
   const station = byId.get(id)
   if (!station) return null
@@ -35,7 +39,16 @@ export function StationDetail({ id, children }: { id: string; children?: React.R
             {stationTitle(station)}
           </h2>
           {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
-          <p className="text-xs text-muted-foreground">{station.address}</p>
+          <p className="text-xs text-muted-foreground">
+            {station.address}
+            {fix && (
+              <span className="tabular-nums">
+                {' · '}
+                {formatDistance(distanceKm(fix, station), locale)}{' '}
+                <span className="opacity-70">({m.straight_line()})</span>
+              </span>
+            )}
+          </p>
         </div>
         <Button
           variant="ghost"

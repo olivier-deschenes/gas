@@ -143,6 +143,7 @@
 }
 
 /* Keep map controls clear of the bottom sheet. */
+.maplibregl-ctrl-bottom-left,
 .maplibregl-ctrl-bottom-right {
   bottom: var(--inset-bottom, 0px);
 }
