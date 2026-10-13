@@ -35,3 +35,13 @@ export function formatRelative(date: Date, locale: string, now = Date.now()) {
   }
   return rtf.format(0, 'minute')
 }
+
+/** 205 → "3 h 25" (fr) / "3 h 25 min" (en); under an hour, "45 min". */
+export function formatDuration(minutes: number, locale: string) {
+  const total = Math.max(1, Math.round(minutes))
+  const h = Math.floor(total / 60)
+  const min = total % 60
+  if (h === 0) return `${min} min`
+  if (locale.startsWith('fr')) return `${h} h ${String(min).padStart(2, '0')}`
+  return min ? `${h} h ${min} min` : `${h} h`
+}

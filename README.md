@@ -20,6 +20,10 @@ refreshed every few minutes).
   resume.
 - **List** — every station sorted by price or distance, with search and a
   region filter.
+- **Trip** — pick a destination (and optionally a start other than your
+  location) to see the cheapest stations within 1 / 2 / 5 km of the driving
+  route, coloured against each other, with how far along the trip and how far
+  off the road each one is. Sort by price or by route order.
 - **Regions** — each region on one province-wide scale (range, median, lowest
   price) against the Quebec median; tap one to frame it on the map.
 - **Directions** — open the station in Apple Maps, Google Maps or Waze (last
@@ -27,8 +31,14 @@ refreshed every few minutes).
 - French (default) and English, light and dark themes, installable to the home
   screen.
 
-Fuel, view, tab, region and selected station live in the URL, so any view can be
-shared or bookmarked.
+Fuel, view, tab, region, selected station and trip endpoints live in the URL, so
+any view can be shared or bookmarked. A trip from "your location" keeps that
+position out of the URL.
+
+Trips use two free, keyless public services straight from the browser: Komoot's
+Photon for place search and the OSRM demo server for driving routes. Both are
+fair-use with no uptime guarantee; `src/lib/places.ts` and `src/lib/routing.ts`
+are the only files to change to swap providers.
 
 ## Stack
 
@@ -57,8 +67,13 @@ tunnel.
 ## Layout
 
 - `src/lib/stations.ts` — feed fetch, validation and normalization
-- `src/lib/pricing.ts` — regional stats, tiers, nearby/ahead ranking
+- `src/lib/pricing.ts` — regional stats, tiers, nearby/ahead and along-route
+  ranking
+- `src/lib/geo.ts` — distances, bearings, route indexing and projection
+- `src/lib/places.ts`, `src/lib/routing.ts` — place search and driving routes
+- `src/hooks/use-trip.ts` — the trip in the URL, its route and corridor
 - `src/stores/location.ts` — locate, drive mode, follow, radius
+- `src/stores/trip.ts` — corridor width, trip start
 - `src/components/map/` — MapLibre map, layers, price pills, user marker
 - `src/components/` — header, cards, station list, regions view
 - `messages/{fr,en}.json` — UI strings

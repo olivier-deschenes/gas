@@ -1,11 +1,13 @@
 import type {
   CircleLayerSpecification,
   ExpressionSpecification,
+  LineLayerSpecification,
   SymbolLayerSpecification,
 } from 'maplibre-gl'
 import type { MapPalette } from './palette'
 
 export const SOURCE_ID = 'stations'
+export const ROUTE_SOURCE_ID = 'route'
 export const INTERACTIVE_LAYERS = ['stations-circle', 'stations-label', 'stations-star']
 
 const FONT = ['Noto Sans Bold']
@@ -14,17 +16,18 @@ export const LABEL_MINZOOM = 10
 
 type Circle = Omit<CircleLayerSpecification, 'source'>
 type Symbol = Omit<SymbolLayerSpecification, 'source'>
+type Line = Omit<LineLayerSpecification, 'source'>
 
 const tier = ['get', 'tier'] as ExpressionSpecification
 const priced = ['>=', tier, 0] as ExpressionSpecification
-const inRegion = (region: string | undefined): ExpressionSpecification =>
-  region ? ['==', ['get', 'region'], region] : ['literal', true]
+/** Stations outside the chosen region or trip corridor are faded. */
+const focused = ['!', ['get', 'dim']] as ExpressionSpecification
 
 export function pillImageId(theme: string, t: number) {
   return `pill-${theme}-${t}`
 }
 
-export function circleLayer(p: MapPalette, region?: string): Circle {
+export function circleLayer(p: MapPalette): Circle {
   return {
     id: 'stations-circle',
     type: 'circle',
@@ -61,18 +64,18 @@ export function circleLayer(p: MapPalette, region?: string): Circle {
       ],
       'circle-stroke-color': p.halo,
       'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 4, 0.5, 10, 1.5],
-      'circle-opacity': ['case', inRegion(region), 1, 0.18],
-      'circle-stroke-opacity': ['case', inRegion(region), 1, 0.18],
+      'circle-opacity': ['case', focused, 1, 0.18],
+      'circle-stroke-opacity': ['case', focused, 1, 0.18],
     },
   }
 }
 
-export function labelLayer(p: MapPalette, theme: string, region?: string): Symbol {
+export function labelLayer(p: MapPalette, theme: string): Symbol {
   return {
     id: 'stations-label',
     type: 'symbol',
     minzoom: LABEL_MINZOOM,
-    filter: ['all', priced, ['!', ['get', 'star']], inRegion(region)],
+    filter: ['all', priced, ['!', ['get', 'star']], focused],
     layout: {
       'text-field': ['get', 'label'],
       'text-font': FONT,
@@ -92,11 +95,11 @@ export function labelLayer(p: MapPalette, theme: string, region?: string): Symbo
   }
 }
 
-export function starLayer(theme: string, region?: string): Symbol {
+export function starLayer(theme: string): Symbol {
   return {
     id: 'stations-star',
     type: 'symbol',
-    filter: ['all', ['get', 'star'], inRegion(region)],
+    filter: ['all', ['get', 'star'], focused],
     layout: {
       'text-field': ['concat', '★ ', ['get', 'label']],
       'text-font': FONT,
@@ -125,4 +128,35 @@ export function selectedLayer(p: MapPalette, id: string | undefined): Circle {
       'circle-stroke-width': 3,
     },
   }
+}
+
+const routeWidth = (extra: number): ExpressionSpecification => [
+  'interpolate',
+  ['linear'],
+  ['zoom'],
+  5,
+  3 + extra,
+  10,
+  4.5 + extra,
+  15,
+  7 + extra,
+]
+
+/** Route casing then line, drawn under the stations. */
+export function routeLayers(p: MapPalette): [Line, Line] {
+  const layout = { 'line-join': 'round', 'line-cap': 'round' } as const
+  return [
+    {
+      id: 'route-casing',
+      type: 'line',
+      layout,
+      paint: { 'line-color': p.halo, 'line-width': routeWidth(3) },
+    },
+    {
+      id: 'route-line',
+      type: 'line',
+      layout,
+      paint: { 'line-color': p.user, 'line-width': routeWidth(0), 'line-opacity': 0.85 },
+    },
+  ]
 }

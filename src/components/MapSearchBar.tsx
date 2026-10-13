@@ -1,6 +1,7 @@
-import { IconSearch } from '@tabler/icons-react'
+import { IconRoute, IconSearch } from '@tabler/icons-react'
 import { Logo } from '#/components/AppHeader'
 import { AppMenu } from '#/components/AppMenu'
+import { Button } from '#/components/ui/button'
 import { useSetSearch } from '#/hooks/use-app-search'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
@@ -25,6 +26,14 @@ export function MapSearchBar({ className }: { className?: string }) {
         <IconSearch className="size-4 shrink-0" />
         <span className="truncate">{m.search_placeholder()}</span>
       </button>
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={m.trip_plan()}
+        onClick={() => setSearch({ view: 'list', tab: 'trip' }, { push: true })}
+      >
+        <IconRoute />
+      </Button>
       <AppMenu />
     </div>
   )

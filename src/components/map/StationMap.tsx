@@ -5,10 +5,11 @@ import type { MapLayerMouseEvent, MapRef } from 'react-map-gl/maplibre'
 import * as maplibregl from 'maplibre-gl'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import type { Map as MapLibreMap } from 'maplibre-gl'
-import type { FeatureCollection, Point } from 'geojson'
+import type { Feature, FeatureCollection, LineString, Point } from 'geojson'
 
 import { useAppSearch, useSetSearch } from '#/hooks/use-app-search'
 import { getFuelStats, useStations } from '#/hooks/use-stations'
+import { useTrip } from '#/hooks/use-trip'
 import { formatPrice } from '#/lib/format'
 import { mapPadding, mapStore } from '#/stores/map'
 import { locationStore, setFollow } from '#/stores/location'
@@ -20,10 +21,12 @@ import type { Tier } from '#/lib/pricing'
 
 import {
   INTERACTIVE_LAYERS,
+  ROUTE_SOURCE_ID,
   SOURCE_ID,
   circleLayer,
   labelLayer,
   pillImageId,
+  routeLayers,
   selectedLayer,
   starLayer,
 } from './layers'
@@ -55,6 +58,8 @@ interface StationProps {
   label: string
   tier: Tier | -1
   star: boolean
+  /** Outside the chosen region or trip corridor. */
+  dim: boolean
 }
 
 export function StationMap() {
@@ -78,6 +83,8 @@ export function StationMap() {
   const palette = useMemo(() => readPalette(), [theme])
 
   const stats = getFuelStats(stations, fuel)
+  const { along, route } = useTrip()
+  const line = route.data?.line ?? null
 
   const data = useMemo<FeatureCollection<Point, StationProps>>(() => {
     return {
@@ -85,6 +92,8 @@ export function StationMap() {
       features: stations.map((s) => {
         const price = s.prices[fuel]
         const rank = stats.ranks.get(s.id)
+        // On a trip, rank against the corridor instead of the region.
+        const routeTier = along?.tiers.get(s.id)
         return {
           type: 'Feature',
           geometry: { type: 'Point', coordinates: [s.lng, s.lat] },
@@ -93,13 +102,24 @@ export function StationMap() {
             region: s.region,
             price: price ?? 9999,
             label: price == null ? '' : formatPrice(price, locale),
-            tier: rank?.tier ?? -1,
-            star: rank?.regionCheapest ?? false,
+            tier: along ? (routeTier ?? -1) : (rank?.tier ?? -1),
+            star: along ? along.cheapestIds.has(s.id) : (rank?.regionCheapest ?? false),
+            dim: along ? routeTier == null : region != null && s.region !== region,
           },
         }
       }),
     }
-  }, [stations, fuel, stats, locale])
+  }, [stations, fuel, stats, locale, along, region])
+
+  const routeData = useMemo<Feature<LineString> | null>(
+    () =>
+      line && {
+        type: 'Feature',
+        geometry: { type: 'LineString', coordinates: line.coords as Array<[number, number]> },
+        properties: {},
+      },
+    [line],
+  )
 
   // Fly to a station picked outside the map (list, nearby card, deep link).
   useEffect(() => {
@@ -122,6 +142,13 @@ export function StationMap() {
     map.fitBounds(bounds, { padding: mapPadding(), maxZoom: 12, duration: 900 })
     // Re-frame only when the region itself changes, not on fuel switches.
   }, [loaded, region])
+
+  // Frame a new route, unless drive mode is following the user.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!loaded || !map || !line || locationStore.state.follow) return
+    map.fitBounds(line.bounds, { padding: mapPadding(), maxZoom: 14, duration: 900 })
+  }, [loaded, line])
 
   // Drive mode: keep the user in frame, heading-up once they're moving.
   useEffect(() => {
@@ -223,11 +250,19 @@ export function StationMap() {
     >
       <AttributionControl compact position="bottom-left" />
       <Source id={SOURCE_ID} type="geojson" data={data}>
-        <Layer {...circleLayer(palette, region)} />
+        <Layer {...circleLayer(palette)} />
         <Layer {...selectedLayer(palette, station)} />
-        {pillsFor === theme && <Layer {...labelLayer(palette, theme, region)} />}
-        {pillsFor === theme && <Layer {...starLayer(theme, region)} />}
+        {pillsFor === theme && <Layer {...labelLayer(palette, theme)} />}
+        {pillsFor === theme && <Layer {...starLayer(theme)} />}
       </Source>
+      {routeData && (
+        // Declared after the stations so they exist to slot under on re-add.
+        <Source id={ROUTE_SOURCE_ID} type="geojson" data={routeData}>
+          {routeLayers(palette).map((layer) => (
+            <Layer key={layer.id} {...layer} beforeId="stations-circle" />
+          ))}
+        </Source>
+      )}
       {fix && <UserMarker fix={fix} />}
     </Map>
   )

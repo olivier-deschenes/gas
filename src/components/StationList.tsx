@@ -219,7 +219,8 @@ export function StationList() {
                   <StationRow
                     station={row.station}
                     price={row.price ?? null}
-                    rank={stats.ranks.get(row.station.id)}
+                    tier={stats.ranks.get(row.station.id)?.tier ?? -1}
+                    star={stats.ranks.get(row.station.id)?.regionCheapest}
                     distanceKm={row.distance ?? null}
                     onSelect={(id) => setSearch({ station: id, view: 'map' })}
                     className={row.station.id === selected ? 'bg-muted' : undefined}

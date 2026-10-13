@@ -5,14 +5,20 @@ import { stationTitle } from '#/lib/i18n'
 import { cn } from '#/lib/utils'
 import { getLocale } from '#/paraglide/runtime'
 import { m } from '#/paraglide/messages'
-import type { StationRank } from '#/lib/pricing'
+import type { Tier } from '#/lib/pricing'
 import type { Station } from '#/lib/stations'
 
 interface StationRowProps {
   station: Station
   price: number | null
-  rank: StationRank | undefined
-  distanceKm: number | null
+  tier: Tier | -1
+  /** Cheapest of its group (region or route). */
+  star?: boolean
+  distanceKm?: number | null
+  /** Replaces the town under the name. */
+  subtitle?: React.ReactNode
+  /** Replaces the distance under the price. */
+  meta?: React.ReactNode
   ahead?: boolean
   size?: 'default' | 'lg'
   onSelect: (id: string) => void
@@ -22,8 +28,11 @@ interface StationRowProps {
 export function StationRow({
   station,
   price,
-  rank,
+  tier,
+  star,
   distanceKm,
+  subtitle,
+  meta,
   ahead,
   size = 'default',
   onSelect,
@@ -42,11 +51,11 @@ export function StationRow({
         className,
       )}
     >
-      <TierBar tier={rank?.tier ?? -1} />
+      <TierBar tier={tier} />
       <div className="min-w-0 flex-1">
         <div className={cn('flex items-center gap-1.5 font-medium', lg ? 'text-base' : 'text-sm')}>
           <span className="truncate">{stationTitle(station)}</span>
-          {rank?.regionCheapest && <RegionStar />}
+          {star && <RegionStar />}
         </div>
         <div className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
           {ahead && (
@@ -54,7 +63,7 @@ export function StationRow({
               {m.ahead()}
             </span>
           )}
-          <span className="truncate">{station.city || station.address}</span>
+          <span className="truncate">{subtitle ?? (station.city || station.address)}</span>
         </div>
       </div>
       <div className="shrink-0 text-right">
@@ -67,9 +76,9 @@ export function StationRow({
         >
           {price == null ? m.unavailable() : formatPrice(price, locale)}
         </div>
-        {distanceKm != null && (
+        {(meta != null || distanceKm != null) && (
           <div className="mt-1 text-xs text-muted-foreground tabular-nums">
-            {formatDistance(distanceKm, locale)}
+            {meta ?? formatDistance(distanceKm!, locale)}
           </div>
         )}
       </div>

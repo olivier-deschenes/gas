@@ -3,14 +3,21 @@ import { TIERS } from '#/lib/pricing'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
-export function MapLegend({ className }: { className?: string }) {
+/** `scope` says what stations are ranked against: their region or the trip. */
+export function MapLegend({
+  scope = 'region',
+  className,
+}: {
+  scope?: 'region' | 'route'
+  className?: string
+}) {
   return (
     <div
       className={cn(
         'flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] whitespace-nowrap text-muted-foreground',
         className,
       )}
-      aria-label={m.legend_title()}
+      aria-label={scope === 'route' ? m.legend_title_route() : m.legend_title()}
     >
       <span>{m.legend_cheaper()}</span>
       <span className="flex" aria-hidden>
@@ -21,7 +28,7 @@ export function MapLegend({ className }: { className?: string }) {
       <span>{m.legend_pricier()}</span>
       <span className="ml-auto flex items-center gap-1">
         <RegionStar />
-        {m.region_cheapest()}
+        {scope === 'route' ? m.route_cheapest() : m.region_cheapest()}
       </span>
     </div>
   )

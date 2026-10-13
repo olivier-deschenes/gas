@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { IconX } from '@tabler/icons-react'
+import { IconRoute, IconX } from '@tabler/icons-react'
 import { FuelToggle } from '#/components/FuelToggle'
 import { LocateButton } from '#/components/LocateButton'
 import { MapSearchBar } from '#/components/MapSearchBar'
 import { NearbyCard } from '#/components/NearbyCard'
 import { StationDetail } from '#/components/StationDetail'
+import { TripCard } from '#/components/TripCard'
 import { Button } from '#/components/ui/button'
 import { useAppSearch, useSetSearch } from '#/hooks/use-app-search'
 import { useGeoErrorToasts } from '#/hooks/use-geo-error-toasts'
+import { useTripActions } from '#/hooks/use-trip'
 import { cn } from '#/lib/utils'
 import { mapStore } from '#/stores/map'
 import { m } from '#/paraglide/messages'
@@ -41,8 +43,9 @@ function useInset(ref: React.RefObject<HTMLElement | null>, edge: 'top' | 'botto
 }
 
 export function MapChrome() {
-  const { station, region } = useAppSearch()
+  const { station, region, to, toName } = useAppSearch()
   const setSearch = useSetSearch()
+  const { clear: clearTrip } = useTripActions()
   const [expanded, setExpanded] = useState(false)
   const swipe = useSheetSwipe(setExpanded)
   const headerRef = useRef<HTMLDivElement>(null)
@@ -63,12 +66,16 @@ export function MapChrome() {
           {region && (
             <RegionChip region={region} onClear={() => setSearch({ region: undefined })} />
           )}
+          {to && <TripChip name={toName} onClear={clearTrip} />}
         </div>
       </div>
 
-      {region && (
-        <div className="pointer-events-auto hidden self-start lg:block">
-          <RegionChip region={region} onClear={() => setSearch({ region: undefined })} />
+      {(region || to) && (
+        <div className="pointer-events-auto hidden items-center gap-2 self-start lg:flex">
+          {region && (
+            <RegionChip region={region} onClear={() => setSearch({ region: undefined })} />
+          )}
+          {to && <TripChip name={toName} onClear={clearTrip} />}
         </div>
       )}
 
@@ -97,7 +104,7 @@ export function MapChrome() {
             >
               <span className="h-1 w-9 rounded-full bg-muted-foreground/40" />
             </button>
-            <NearbyCard collapsed={!expanded} />
+            {to ? <TripCard collapsed={!expanded} /> : <NearbyCard collapsed={!expanded} />}
           </>
         )}
       </div>
@@ -116,6 +123,22 @@ function RegionChip({ region, onClear }: { region: string; onClear: () => void }
       <span className="truncate">{region}</span>
       <IconX data-icon="inline-end" />
       <span className="sr-only">{m.whole_province()}</span>
+    </Button>
+  )
+}
+
+function TripChip({ name, onClear }: { name: string | undefined; onClear: () => void }) {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-8 min-w-0 bg-background shadow-md shadow-black/10 dark:bg-background"
+      onClick={onClear}
+    >
+      <IconRoute data-icon="inline-start" />
+      <span className="truncate">{name ?? m.trip_to()}</span>
+      <IconX data-icon="inline-end" />
+      <span className="sr-only">{m.trip_clear()}</span>
     </Button>
   )
 }

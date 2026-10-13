@@ -11,12 +11,15 @@ import { Panel } from '#/components/Panel'
 import { StationMap } from '#/components/map/StationMap'
 import { Button } from '#/components/ui/button'
 import { Skeleton } from '#/components/ui/skeleton'
+import { parseLatLng } from '#/lib/geo'
 import { FUELS } from '#/lib/stations'
 import { stationsQueryOptions } from '#/lib/stations.query'
 import { cn } from '#/lib/utils'
+import { useTripStart } from '#/hooks/use-trip'
 import { useWakeLock } from '#/hooks/use-wake-lock'
 import { initLocation, locationStore } from '#/stores/location'
 import { mapStore } from '#/stores/map'
+import { initTrip } from '#/stores/trip'
 import { m } from '#/paraglide/messages'
 
 const searchDefaults = {
@@ -25,6 +28,14 @@ const searchDefaults = {
   tab: 'stations',
 } as const
 
+const latLng = z
+  .string()
+  .refine((value) => parseLatLng(value) != null)
+  .optional()
+  .catch(undefined)
+// Search values are JSON-parsed first, so a name like "2020" arrives as a number.
+const placeName = z.coerce.string().max(120).optional().catch(undefined)
+
 const searchSchema = z.object({
   fuel: z.enum(FUELS).default(searchDefaults.fuel).catch(searchDefaults.fuel),
   view: z
@@ -32,11 +43,17 @@ const searchSchema = z.object({
     .default(searchDefaults.view)
     .catch(searchDefaults.view),
   tab: z
-    .enum(['stations', 'regions'])
+    .enum(['stations', 'trip', 'regions'])
     .default(searchDefaults.tab)
     .catch(searchDefaults.tab),
   region: z.string().optional().catch(undefined),
   station: z.string().optional().catch(undefined),
+  /** Trip destination as "lat,lng", with its display name. */
+  to: latLng,
+  toName: placeName,
+  /** Trip start; absent means "my location". */
+  from: latLng,
+  fromName: placeName,
 })
 
 export type AppSearch = z.infer<typeof searchSchema>
@@ -58,7 +75,9 @@ function App() {
   const insetBottom = useSelector(mapStore, (s) => s.insets.bottom)
   const driving = useSelector(locationStore, (s) => s.driving)
   useWakeLock(driving)
+  useTripStart()
   useEffect(() => {
+    initTrip()
     void initLocation()
   }, [])
 

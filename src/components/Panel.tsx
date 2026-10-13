@@ -1,11 +1,12 @@
 import { RegionList } from '#/components/RegionList'
 import { StationList } from '#/components/StationList'
+import { TripPanel } from '#/components/TripPanel'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import { useAppSearch, useSetSearch } from '#/hooks/use-app-search'
 import { SOURCE_URL } from '#/lib/stations'
 import { m } from '#/paraglide/messages'
 
-/** Stations / Regions lists: the sidebar on desktop, the list view on mobile. */
+/** Stations / Trip / Regions: the sidebar on desktop, the list view on mobile. */
 export function Panel() {
   const { tab } = useAppSearch()
   const setSearch = useSetSearch()
@@ -20,12 +21,18 @@ export function Panel() {
         <TabsTrigger value="stations" className="flex-none px-0 text-[13px]">
           {m.tab_stations()}
         </TabsTrigger>
+        <TabsTrigger value="trip" className="flex-none px-0 text-[13px]">
+          {m.tab_trip()}
+        </TabsTrigger>
         <TabsTrigger value="regions" className="flex-none px-0 text-[13px]">
           {m.tab_regions()}
         </TabsTrigger>
       </TabsList>
       <TabsContent value="stations" className="flex min-h-0 flex-col data-[state=inactive]:hidden">
         <StationList />
+      </TabsContent>
+      <TabsContent value="trip" className="flex min-h-0 flex-col data-[state=inactive]:hidden">
+        <TripPanel />
       </TabsContent>
       <TabsContent value="regions" className="flex min-h-0 flex-col data-[state=inactive]:hidden">
         <RegionList />
