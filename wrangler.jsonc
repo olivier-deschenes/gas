@@ -3,5 +3,6 @@
   "name": "gas",
   "compatibility_date": "2025-09-02",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "src/server.ts"
+  "main": "src/server.ts",
+  "routes": [{ "pattern": "gas.odeschenes.dev", "custom_domain": true }],
 }
