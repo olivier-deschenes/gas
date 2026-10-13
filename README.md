@@ -1,225 +1,64 @@
-Welcome to your new TanStack Start app!
+# Plein
 
-# Getting Started
+Live Quebec gas prices on a map, built for checking from the car.
 
-To run this application:
+Data comes from the Régie de l'énergie du Québec's public feed
+(`https://regieessencequebec.ca/stations.geojson.gz`, ~2,460 stations,
+refreshed every few minutes).
+
+## What it does
+
+- **Map** — every station, coloured by how its price ranks _within its
+  administrative region_ (green = cheapest 10 %, red = priciest 10 %). From
+  zoom 10 prices appear as pills; when they overlap, the cheapest wins. A ★
+  marks each region's lowest price at every zoom.
+- **Fuel** — Regular by default; switch to Premium or Diesel.
+- **Near me** — locate once to see the cheapest stations within 5 / 10 / 25 km
+  and the local median.
+- **Drive mode** — tracks your position, follows heading-up, keeps the screen
+  on, and ranks stations _ahead_ of you first. Pan to look around; Recenter to
+  resume.
+- **List** — every station sorted by price or distance, with search and a
+  region filter.
+- **Regions** — each region on one province-wide scale (range, median, lowest
+  price) against the Quebec median; tap one to frame it on the map.
+- **Directions** — open the station in Apple Maps, Google Maps or Waze (last
+  choice remembered).
+- French (default) and English, light and dark themes, installable to the home
+  screen.
+
+Fuel, view, tab, region and selected station live in the URL, so any view can be
+shared or bookmarked.
+
+## Stack
+
+TanStack Start (React 19, file routes, Cloudflare Workers), TanStack Query
+(feed), Router (URL state), Store (location, map, theme), Table v9 + Virtual
+(list), MapLibre GL via react-map-gl with OpenFreeMap basemaps (no API key),
+shadcn/ui + Tailwind 4, Paraglide (i18n), Vitest.
+
+The browser fetches the feed directly: it is CDN-cached and CORS-enabled, so
+there is no server proxy.
+
+## Develop
 
 ```bash
 bun install
-bun --bun run dev
+bun run dev        # http://localhost:3000
+bun run test       # unit tests (normalization, pricing, geo)
+bun run lint
+bun run build
 ```
 
-# Building For Production
-
-To build this application for production:
-
-```bash
-bun --bun run build
-```
-
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
-
-## Linting & Formatting
-
-
-This project uses [eslint](https://eslint.org/) and [prettier](https://prettier.io/) for linting and formatting. Eslint is configured using [tanstack/eslint-config](https://tanstack.com/config/latest/docs/eslint). The following scripts are available:
-
-```bash
-bun --bun run lint
-bun --bun run format
-bun --bun run check
-```
-
-
-## Deploy to Cloudflare Workers
-
-This project uses the Cloudflare Vite plugin (configured in `vite.config.ts`) and `wrangler.jsonc`:
-
-1. Install Wrangler: `npm install -g wrangler`
-2. Authenticate: `wrangler login`
-3. Deploy: `npx wrangler deploy`
-
-For production env vars, run `wrangler secret put MY_VAR` for each secret listed in `.env.example`. Public (non-secret) vars go in `wrangler.jsonc` under `vars`.
-
-KV, D1, R2, and Durable Object bindings are configured in `wrangler.jsonc` — see https://developers.cloudflare.com/workers/wrangler/configuration/.
-
-
-# Paraglide i18n
-
-This add-on wires up ParaglideJS for localized routing and message formatting.
-
-- Messages live in `project.inlang/messages`.
-- URLs are localized through the Paraglide Vite plugin and router `rewrite` hooks.
-- Run the dev server or build to regenerate the `src/paraglide` outputs.
-
-
-## Shadcn
-
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
-
-```bash
-pnpm dlx shadcn@latest add button
-```
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+Geolocation needs a secure context. `localhost` works on the desktop; to try
+location and drive mode on a phone, deploy (`bun run deploy`) or use an HTTPS
+tunnel.
+
+## Layout
+
+- `src/lib/stations.ts` — feed fetch, validation and normalization
+- `src/lib/pricing.ts` — regional stats, tiers, nearby/ahead ranking
+- `src/stores/location.ts` — locate, drive mode, follow, radius
+- `src/components/map/` — MapLibre map, layers, price pills, user marker
+- `src/components/` — header, cards, station list, regions view
+- `messages/{fr,en}.json` — UI strings

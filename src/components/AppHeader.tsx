@@ -49,7 +49,12 @@ function Logo() {
   return (
     <svg viewBox="0 0 24 24" className="size-6 shrink-0" aria-hidden="true">
       <rect width="24" height="24" className="fill-foreground" />
-      <path d="M8 6h6.5a3.5 3.5 0 0 1 0 7H11v5H8z M11 9v1h3.5a.5.5 0 0 0 0-1z" className="fill-background" fillRule="evenodd" />
+      <path
+        d="M8 6h6.5a3.5 3.5 0 0 1 0 7H11v5H8z M11 9v1h3.5a.5.5 0 0 0 0-1z"
+        className="fill-background"
+        fillRule="evenodd"
+      />
+      <rect x="15" y="16" width="3" height="2" className="fill-tier-0" />
     </svg>
   )
 }
