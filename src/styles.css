@@ -38,6 +38,9 @@
   --tier-none: #d4d4d4;
   --map-halo: #ffffff;
   --map-text: #171717;
+  --map-highway: #ffffff;
+  --map-highway-casing: #b4b4b4;
+  --map-highway-far: #c2c2c2;
   --user: #0a72ef;
 }
 
@@ -70,6 +73,9 @@
   --tier-none: #404040;
   --map-halo: #171717;
   --map-text: #fafafa;
+  --map-highway: #575757;
+  --map-highway-casing: #737373;
+  --map-highway-far: #4a4a4a;
   --user: #3b9bff;
 }
 

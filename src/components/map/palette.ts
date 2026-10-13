@@ -1,4 +1,5 @@
 import type { Tier } from '#/lib/pricing'
+import type { Map as MapLibreMap } from 'maplibre-gl'
 
 export interface MapPalette {
   tiers: Record<Tier, string>
@@ -57,5 +58,26 @@ export function drawPill(tier: Tier, palette: MapPalette, pixelRatio = 2) {
       // Text may sit over the corners; icon-text-fit padding keeps it clear.
       content: [r / 2, r / 2, size - r / 2, size - r / 2] as [number, number, number, number],
     },
+  }
+}
+
+const HIGHWAY_LAYERS = {
+  inner: ['highway_motorway_inner', 'highway_motorway_bridge_inner', 'tunnel_motorway_inner'],
+  casing: ['highway_motorway_casing', 'highway_motorway_bridge_casing', 'tunnel_motorway_casing'],
+  subtle: ['highway_motorway_subtle'],
+}
+
+/** The base styles mute motorways to near-invisible; lift them so routes read at a glance. */
+export function brightenHighways(map: MapLibreMap) {
+  const css = getComputedStyle(document.documentElement)
+  const colors = {
+    inner: css.getPropertyValue('--map-highway').trim(),
+    casing: css.getPropertyValue('--map-highway-casing').trim(),
+    subtle: css.getPropertyValue('--map-highway-far').trim(),
+  }
+  for (const [kind, ids] of Object.entries(HIGHWAY_LAYERS)) {
+    for (const id of ids) {
+      if (map.getLayer(id)) map.setPaintProperty(id, 'line-color', colors[kind as keyof typeof colors])
+    }
   }
 }
