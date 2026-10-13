@@ -18,7 +18,11 @@ import type { RadiusKm } from '#/stores/location'
 
 const SHOWN = 3
 
-export function NearbyCard() {
+/**
+ * `collapsed` (phones only) keeps the title and the single best pick so the
+ * map stays in view; the desktop corner card always shows everything.
+ */
+export function NearbyCard({ collapsed = false }: { collapsed?: boolean }) {
   const { stations } = useStations()
   const { fuel, region } = useAppSearch()
   const setSearch = useSetSearch()
@@ -55,7 +59,12 @@ export function NearbyCard() {
         </Button>
       </div>
 
-      <div className="flex min-h-8 items-center gap-3 px-4 pt-1.5 pb-1">
+      <div
+        className={cn(
+          'flex min-h-8 items-center gap-3 px-4 pt-1.5 pb-1',
+          collapsed && 'max-lg:hidden',
+        )}
+      >
         {fix && (
           <ToggleGroup
             type="single"
@@ -84,7 +93,7 @@ export function NearbyCard() {
       </div>
 
       <div className="flex flex-col">
-        {top.map((c) => (
+        {top.map((c, i) => (
           <StationRow
             key={c.station.id}
             station={c.station}
@@ -94,7 +103,7 @@ export function NearbyCard() {
             ahead={c.ahead}
             size={driving ? 'lg' : 'default'}
             onSelect={(id) => setSearch({ station: id })}
-            className="px-4"
+            className={cn('px-4', collapsed && i > 0 && 'max-lg:hidden')}
           />
         ))}
         {result && top.length === 0 && (
@@ -104,9 +113,18 @@ export function NearbyCard() {
         )}
       </div>
 
-      <MapLegend className={cn('border-t px-4 py-2', driving && 'hidden')} />
+      <MapLegend
+        className={cn('border-t px-4 py-2', driving && 'hidden', collapsed && 'max-lg:hidden')}
+      />
       {driving && (
-        <p className="border-t px-4 py-2 text-[11px] text-muted-foreground">{m.screen_on()}</p>
+        <p
+          className={cn(
+            'border-t px-4 py-2 text-[11px] text-muted-foreground',
+            collapsed && 'max-lg:hidden',
+          )}
+        >
+          {m.screen_on()}
+        </p>
       )}
     </section>
   )

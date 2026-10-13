@@ -45,7 +45,7 @@ export function AppHeader({ className }: { className?: string }) {
   )
 }
 
-function Logo() {
+export function Logo() {
   return (
     <svg viewBox="0 0 24 24" className="size-6 shrink-0" aria-hidden="true">
       <rect width="24" height="24" className="fill-foreground" />

@@ -65,5 +65,7 @@
   "prices_heading": "Prix",
   "screen_on": "L'écran reste allumé",
   "median_short": "méd.",
-  "stations_count_one": "{count} station"
+  "stations_count_one": "{count} station",
+  "sheet_expand": "Afficher plus",
+  "sheet_collapse": "Afficher moins"
 }

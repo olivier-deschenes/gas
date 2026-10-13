@@ -10,6 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '#/components/ui/dropdown-menu'
+import { useNow } from '#/hooks/use-now'
+import { useStations } from '#/hooks/use-stations'
+import { formatRelative } from '#/lib/format'
 import { setThemePreference, themeStore } from '#/stores/theme'
 import { getLocale, setLocale } from '#/paraglide/runtime'
 import { m } from '#/paraglide/messages'
@@ -22,6 +25,8 @@ const LANGUAGES = [
 
 export function AppMenu() {
   const preference = useSelector(themeStore, (s) => s.preference)
+  const { generatedAt } = useStations()
+  const now = useNow()
 
   return (
     <DropdownMenu>
@@ -30,7 +35,7 @@ export function AppMenu() {
           <IconDots />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44">
+      <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuLabel>{m.language_label()}</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={getLocale()}
@@ -52,6 +57,10 @@ export function AppMenu() {
           <DropdownMenuRadioItem value="light">{m.theme_light()}</DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="dark">{m.theme_dark()}</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="font-normal" title={generatedAt}>
+          {m.updated({ time: formatRelative(new Date(generatedAt), getLocale(), now) })}
+        </DropdownMenuLabel>
       </DropdownMenuContent>
     </DropdownMenu>
   )

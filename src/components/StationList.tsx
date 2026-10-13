@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from '@tanstack/react-store'
 import {
   columnFilteringFeature,
@@ -91,13 +91,19 @@ export function StationList() {
   // component out of compiler memoization so the row model stays live.
   'use no memo'
   const { stations } = useStations()
-  const { fuel, region, station: selected } = useAppSearch()
+  const { fuel, region, station: selected, view } = useAppSearch()
   const setSearch = useSetSearch()
   const stats = useFuelStats(fuel)
   const fix = useSelector(locationStore, (s) => s.fix)
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<SortKey>('price')
   const scrollRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Phones reach this list from the map's search bar: start typing right away.
+  useEffect(() => {
+    if (view === 'list') inputRef.current?.focus()
+  }, [view])
 
   const data = useMemo<Array<ListRow>>(
     () =>
@@ -143,6 +149,7 @@ export function StationList() {
         <div className="relative">
           <IconSearch className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
+            ref={inputRef}
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
