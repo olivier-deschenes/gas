@@ -5,7 +5,7 @@ import { MapProvider } from 'react-map-gl/maplibre'
 import { IconRefresh } from '@tabler/icons-react'
 import { z } from 'zod'
 
-import { AppHeader } from '#/components/AppHeader'
+import { AppHeader, Logo } from '#/components/AppHeader'
 import { MapChrome } from '#/components/MapChrome'
 import { Panel } from '#/components/Panel'
 import { StationMap } from '#/components/map/StationMap'
@@ -19,12 +19,22 @@ import { initLocation, locationStore } from '#/stores/location'
 import { mapStore } from '#/stores/map'
 import { m } from '#/paraglide/messages'
 
-const searchDefaults = { fuel: 'regular', view: 'map', tab: 'stations' } as const
+const searchDefaults = {
+  fuel: 'regular',
+  view: 'map',
+  tab: 'stations',
+} as const
 
 const searchSchema = z.object({
   fuel: z.enum(FUELS).default(searchDefaults.fuel).catch(searchDefaults.fuel),
-  view: z.enum(['map', 'list']).default(searchDefaults.view).catch(searchDefaults.view),
-  tab: z.enum(['stations', 'regions']).default(searchDefaults.tab).catch(searchDefaults.tab),
+  view: z
+    .enum(['map', 'list'])
+    .default(searchDefaults.view)
+    .catch(searchDefaults.view),
+  tab: z
+    .enum(['stations', 'regions'])
+    .default(searchDefaults.tab)
+    .catch(searchDefaults.tab),
   region: z.string().optional().catch(undefined),
   station: z.string().optional().catch(undefined),
 })
@@ -36,7 +46,8 @@ export const Route = createFileRoute('/')({
   search: { middlewares: [stripSearchParams(searchDefaults)] },
   // Map, geolocation and storage are browser-only.
   ssr: false,
-  loader: ({ context }) => context.queryClient.ensureQueryData(stationsQueryOptions),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(stationsQueryOptions),
   pendingComponent: LoadingScreen,
   errorComponent: ErrorScreen,
   component: App,
@@ -65,7 +76,9 @@ function App() {
         </aside>
         <main
           className="relative min-w-0 flex-1"
-          style={{ '--inset-bottom': `${insetBottom}px` } as React.CSSProperties}
+          style={
+            { '--inset-bottom': `${insetBottom}px` } as React.CSSProperties
+          }
         >
           <StationMap />
           <MapChrome />
@@ -75,11 +88,72 @@ function App() {
   )
 }
 
+/** Mirrors the real layout (sidebar, map, floating chrome) so nothing jumps on load. */
 function LoadingScreen() {
   return (
-    <div className="flex h-dvh flex-col gap-3 p-3">
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="flex-1" />
+    <div
+      className="relative flex h-dvh w-full overflow-hidden"
+      aria-busy="true"
+    >
+      <aside className="hidden w-[400px] shrink-0 flex-col border-r bg-background lg:flex">
+        <div className="flex flex-col gap-2 border-b p-3">
+          <div className="flex h-8 items-center gap-2">
+            <Logo />
+            <span className="text-[15px] font-semibold tracking-tight">
+              {m.app_name()}
+            </span>
+            <Skeleton className="h-3 w-24" />
+          </div>
+          <Skeleton className="h-9 w-full" />
+        </div>
+        <div className="flex h-9 items-center gap-4 border-b px-3">
+          <Skeleton className="h-3 w-14" />
+          <Skeleton className="h-3 w-14" />
+        </div>
+        <div className="flex flex-col">
+          {Array.from({ length: 10 }, (_, i) => (
+            <RowSkeleton key={i} className="px-3" />
+          ))}
+        </div>
+      </aside>
+
+      <main className="relative min-w-0 flex-1 bg-muted/60">
+        <div className="absolute inset-0 flex flex-col p-3 pt-[max(env(safe-area-inset-top),0.75rem)] pb-[max(env(safe-area-inset-bottom),0.75rem)] lg:p-4">
+          <div className="flex flex-col items-start gap-2 lg:hidden">
+            <div className="flex h-12 w-full items-center gap-3 border bg-background px-3 shadow-lg shadow-black/10">
+              <Logo />
+              <Skeleton className="h-3 w-40" />
+            </div>
+            <Skeleton className="h-8 w-56 border bg-background shadow-md shadow-black/10" />
+          </div>
+
+          <div className="mt-auto mb-2 size-11 self-end border bg-background shadow-lg" />
+
+          <div className="w-full border bg-background pb-2 shadow-xl shadow-black/10 lg:absolute lg:top-4 lg:right-4 lg:w-96">
+            <div className="flex h-5 items-end justify-center lg:hidden">
+              <span className="h-1 w-9 rounded-full bg-muted-foreground/40" />
+            </div>
+            <div className="flex items-center gap-2 px-4 pt-3">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="ml-auto h-8 w-24" />
+            </div>
+            <RowSkeleton className="px-4" />
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+function RowSkeleton({ className }: { className?: string }) {
+  return (
+    <div className={cn('flex items-center gap-3 py-2.5', className)}>
+      <Skeleton className="h-9 w-1" />
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <Skeleton className="h-3.5 w-2/5" />
+        <Skeleton className="h-3 w-1/4" />
+      </div>
+      <Skeleton className="h-5 w-14" />
     </div>
   )
 }
