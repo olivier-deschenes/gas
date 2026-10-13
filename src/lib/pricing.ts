@@ -1,5 +1,5 @@
-import { angleDiff, bearingDeg, boundsOf, distanceKm, inBounds } from './geo'
-import type { Bounds, LngLat } from './geo'
+import { angleDiff, bearingDeg, boundsOf, distanceKm, inBounds, locateOnRoute } from './geo'
+import type { Bounds, LngLat, RouteLine } from './geo'
 import type { Fuel, Station } from './stations'
 
 /** 0 = cheapest decile in its region … 4 = priciest decile. */
@@ -186,5 +186,71 @@ function rank(pool: Array<Candidate>, preferAhead: boolean): Nearby {
     candidates: pool,
     localMedian: prices.length ? median(prices) : null,
     considered: pool.length,
+  }
+}
+
+export interface RouteStop {
+  station: Station
+  /** Straight-line distance from the route, in km. */
+  offsetKm: number
+  /** Distance from the start of the route, in km. */
+  alongKm: number
+}
+
+/** Every station within `maxKm` of the route, whatever it sells. */
+export function stationsAlongRoute(
+  stations: ReadonlyArray<Station>,
+  line: RouteLine,
+  maxKm: number,
+): Array<RouteStop> {
+  const stops: Array<RouteStop> = []
+  for (const station of stations) {
+    const pos = locateOnRoute(line, station, maxKm)
+    if (pos) stops.push({ station, ...pos })
+  }
+  return stops
+}
+
+export interface RouteCandidate extends RouteStop {
+  price: number
+}
+
+export interface AlongRoute {
+  /** Cheapest first; ties go to the station closest to the route. */
+  candidates: Array<RouteCandidate>
+  median: number | null
+  /** Tier within this corridor, so the colours compare stations on the trip. */
+  tiers: Map<string, Tier>
+  /** Every station tied at the corridor's lowest price. */
+  cheapestIds: Set<string>
+}
+
+export function cheapestAlongRoute(
+  stops: ReadonlyArray<RouteStop>,
+  fuel: Fuel,
+  corridorKm: number,
+): AlongRoute {
+  const candidates: Array<RouteCandidate> = []
+  for (const stop of stops) {
+    const price = stop.station.prices[fuel]
+    if (price == null || stop.offsetKm > corridorKm) continue
+    candidates.push({ ...stop, price })
+  }
+  candidates.sort((a, b) => a.price - b.price || a.offsetKm - b.offsetKm)
+
+  const tiers = new Map<string, Tier>()
+  const cheapestIds = new Set<string>()
+  let cheaper = 0
+  candidates.forEach((c, i) => {
+    if (i > 0 && c.price > candidates[i - 1].price) cheaper = i
+    tiers.set(c.station.id, tierFor(cheaper / candidates.length))
+    if (c.price === candidates[0].price) cheapestIds.add(c.station.id)
+  })
+
+  return {
+    candidates,
+    median: candidates.length ? median(candidates.map((c) => c.price)) : null,
+    tiers,
+    cheapestIds,
   }
 }

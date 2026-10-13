@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { cheapestNear, computeFuelStats, median, tierFor } from './pricing'
+import { indexRoute } from './geo'
+import {
+  cheapestAlongRoute,
+  cheapestNear,
+  computeFuelStats,
+  median,
+  stationsAlongRoute,
+  tierFor,
+} from './pricing'
 import type { Station } from './stations'
 
 let n = 0
@@ -80,3 +88,39 @@ describe('cheapestNear', () => {
     ])
   })
 })
+
+describe('cheapestAlongRoute', () => {
+  // Due east along the 45th parallel, ~78.7 km.
+  const line = indexRoute([
+    [-74, 45],
+    [-73, 45],
+  ])
+  const onRoad = station('A', 180, -73.9, 45)
+  const nearby = station('A', 170, -73.5, 45.01) // ~1.1 km off
+  const offRoad = station('B', 170, -73.2, 45.03) // ~3.3 km off
+  const cheapFar = station('B', 150, -73.5, 45.2) // ~22 km off
+  const noFuel = station('B', null, -73.4, 45)
+  const stops = stationsAlongRoute([onRoad, nearby, offRoad, cheapFar, noFuel], line, 5)
+
+  it('keeps stations within the widest corridor', () => {
+    expect(stops.map((s) => s.station.id).sort()).toEqual(
+      [onRoad.id, nearby.id, offRoad.id, noFuel.id].sort(),
+    )
+  })
+
+  it('ranks by price, then by closeness to the route', () => {
+    const result = cheapestAlongRoute(stops, 'regular', 5)
+    expect(result.candidates.map((c) => c.station.id)).toEqual([nearby.id, offRoad.id, onRoad.id])
+    expect(result.cheapestIds).toEqual(new Set([nearby.id, offRoad.id]))
+    expect(result.median).toBe(170)
+    expect(result.tiers.get(nearby.id)).toBe(0)
+    expect(result.tiers.get(onRoad.id)).toBe(2)
+  })
+
+  it('narrows to the chosen corridor', () => {
+    const result = cheapestAlongRoute(stops, 'regular', 2)
+    expect(result.candidates.map((c) => c.station.id)).toEqual([nearby.id, onRoad.id])
+    expect(result.candidates[0].alongKm).toBeCloseTo(39.3, 0)
+  })
+})
+
