@@ -93,5 +93,9 @@
   "sort_along": "Ordre du trajet",
   "legend_title_route": "Rang sur le trajet",
   "route_cheapest": "Prix le plus bas du trajet",
-  "places_searching": "Recherche…"
+  "places_searching": "Recherche…",
+  "directions_stop": "Arrêt en route",
+  "in_distance": "dans {distance}",
+  "off_route_notice": "Vous êtes hors du trajet.",
+  "reroute": "Recalculer d'ici"
 }

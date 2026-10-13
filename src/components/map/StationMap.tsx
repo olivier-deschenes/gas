@@ -9,14 +9,14 @@ import type { Feature, FeatureCollection, LineString, Point } from 'geojson'
 
 import { useAppSearch, useSetSearch } from '#/hooks/use-app-search'
 import { getFuelStats, useStations } from '#/hooks/use-stations'
-import { useTrip } from '#/hooks/use-trip'
+import { useTrip, useTripProgress } from '#/hooks/use-trip'
 import { formatPrice } from '#/lib/format'
 import { mapPadding, mapStore } from '#/stores/map'
 import { locationStore, setFollow } from '#/stores/location'
 import { themeStore } from '#/stores/theme'
 import { getLocale } from '#/paraglide/runtime'
 import type { Bounds } from '#/lib/geo'
-import { TIERS } from '#/lib/pricing'
+import { TIERS, stopsAhead } from '#/lib/pricing'
 import type { Tier } from '#/lib/pricing'
 
 import {
@@ -83,8 +83,19 @@ export function StationMap() {
   const palette = useMemo(() => readPalette(), [theme])
 
   const stats = getFuelStats(stations, fuel)
-  const { along, route } = useTrip()
+  const trip = useTrip()
+  const { along, route } = trip
   const line = route.data?.line ?? null
+  // Whole km, so driving rebuilds the features once per km rather than per fix.
+  const { travelledKm } = useTripProgress(trip)
+  const passedKm = travelledKm == null ? null : Math.floor(travelledKm)
+  const ahead = useMemo(
+    () =>
+      along &&
+      passedKm != null &&
+      new Set(stopsAhead(along, passedKm).map((c) => c.station.id)),
+    [along, passedKm],
+  )
 
   const data = useMemo<FeatureCollection<Point, StationProps>>(() => {
     return {
@@ -104,12 +115,14 @@ export function StationMap() {
             label: price == null ? '' : formatPrice(price, locale),
             tier: along ? (routeTier ?? -1) : (rank?.tier ?? -1),
             star: along ? along.cheapestIds.has(s.id) : (rank?.regionCheapest ?? false),
-            dim: along ? routeTier == null : region != null && s.region !== region,
+            dim: along
+              ? routeTier == null || (ahead ? !ahead.has(s.id) : false)
+              : region != null && s.region !== region,
           },
         }
       }),
     }
-  }, [stations, fuel, stats, locale, along, region])
+  }, [stations, fuel, stats, locale, along, ahead, region])
 
   const routeData = useMemo<Feature<LineString> | null>(
     () =>

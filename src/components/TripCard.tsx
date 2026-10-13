@@ -1,5 +1,10 @@
 import { useSelector } from '@tanstack/react-store'
-import { IconList, IconPlayerStopFilled, IconSteeringWheel } from '@tabler/icons-react'
+import {
+  IconList,
+  IconPlayerStopFilled,
+  IconRouteAltLeft,
+  IconSteeringWheel,
+} from '@tabler/icons-react'
 import { MapLegend } from '#/components/MapLegend'
 import {
   CorridorToggle,
@@ -10,7 +15,8 @@ import {
 } from '#/components/TripParts'
 import { Button } from '#/components/ui/button'
 import { useSetSearch } from '#/hooks/use-app-search'
-import { useTrip } from '#/hooks/use-trip'
+import { useTrip, useTripActions, useTripProgress } from '#/hooks/use-trip'
+import { stopsAhead } from '#/lib/pricing'
 import { cn } from '#/lib/utils'
 import { locationStore, startDriving, stopDriving } from '#/stores/location'
 import { m } from '#/paraglide/messages'
@@ -22,8 +28,12 @@ export function TripCard({ collapsed = false }: { collapsed?: boolean }) {
   const trip = useTrip()
   const setSearch = useSetSearch()
   const driving = useSelector(locationStore, (s) => s.driving)
+  const { travelledKm, offRoute } = useTripProgress(trip)
+  const { rerouteFromHere } = useTripActions()
   const { along } = trip
-  const top = along?.candidates.slice(0, SHOWN) ?? []
+  // Driving along the route: skip what's already behind.
+  const pool = along && (travelledKm != null ? stopsAhead(along, travelledKm) : along.candidates)
+  const top = pool?.slice(0, SHOWN) ?? []
   const summary = routeSummary(trip)
   const openList = () => setSearch({ view: 'list', tab: 'trip' }, { push: true })
 
@@ -63,6 +73,16 @@ export function TripCard({ collapsed = false }: { collapsed?: boolean }) {
         )}
       </div>
 
+      {offRoute && (
+        <div className="flex items-center gap-2 px-4 py-2">
+          <p className="min-w-0 flex-1 text-xs text-muted-foreground">{m.off_route_notice()}</p>
+          <Button variant="outline" size="sm" className="h-8" onClick={rerouteFromHere}>
+            <IconRouteAltLeft />
+            {m.reroute()}
+          </Button>
+        </div>
+      )}
+
       <TripStatus trip={trip} onChooseStart={openList} className="px-4" />
 
       {along && (
@@ -72,6 +92,7 @@ export function TripCard({ collapsed = false }: { collapsed?: boolean }) {
               key={stop.station.id}
               stop={stop}
               along={along}
+              travelledKm={travelledKm}
               size={driving ? 'lg' : 'default'}
               onSelect={(id) => setSearch({ station: id })}
               className={cn('px-4', collapsed && i > 0 && 'max-lg:hidden')}
@@ -80,7 +101,7 @@ export function TripCard({ collapsed = false }: { collapsed?: boolean }) {
         </div>
       )}
 
-      {along && along.candidates.length > SHOWN && (
+      {pool && pool.length > SHOWN && (
         <Button
           variant="ghost"
           className={cn(

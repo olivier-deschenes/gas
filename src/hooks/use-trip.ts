@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useSelector } from '@tanstack/react-store'
 import { useAppSearch, useSetSearch } from '#/hooks/use-app-search'
 import { useStations } from '#/hooks/use-stations'
-import { formatLatLng, parseLatLng } from '#/lib/geo'
+import { formatLatLng, locateOnRoute, parseLatLng } from '#/lib/geo'
 import { cheapestAlongRoute, stationsAlongRoute } from '#/lib/pricing'
 import { routeQueryOptions } from '#/lib/trip.query'
 import { locateOnce, locationStore } from '#/stores/location'
@@ -66,6 +66,22 @@ export function useTrip() {
 
 export type Trip = ReturnType<typeof useTrip>
 
+/** Further than this from the route, drive mode stops trusting "ahead". */
+const OFF_ROUTE_KM = 1
+
+/**
+ * Drive mode on a trip: how far along the route the user is, or that they've
+ * left it. Both null when not driving or no route yet.
+ */
+export function useTripProgress(trip: Trip) {
+  const driving = useSelector(locationStore, (s) => s.driving)
+  const fix = useSelector(locationStore, (s) => s.fix)
+  const line = trip.route.data?.line
+  if (!driving || !fix || !line) return { travelledKm: null, offRoute: false }
+  const pos = locateOnRoute(line, fix, OFF_ROUTE_KM)
+  return { travelledKm: pos?.alongKm ?? null, offRoute: pos == null }
+}
+
 /**
  * A trip from "my location" opened from a link or a reload has no start yet;
  * take the first fix. Mount once, high in the tree.
@@ -112,6 +128,11 @@ export function useTripActions() {
         from: place ? formatLatLng(place) : undefined,
         fromName: place?.name,
       })
+    },
+    /** Drop the planned start and route from where the user is now. */
+    rerouteFromHere() {
+      setTripStart(locationStore.state.fix)
+      setSearch({ from: undefined, fromName: undefined })
     },
     clear() {
       setTripStart(null)

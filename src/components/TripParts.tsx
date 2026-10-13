@@ -23,22 +23,22 @@ const ON_ROUTE_KM = 0.25
 export function TripStopRow({
   stop,
   along,
+  travelledKm,
   size,
   onSelect,
   className,
 }: {
   stop: RouteCandidate
   along: AlongRoute
+  /** Drive mode: show the distance still to go instead of the trip km. */
+  travelledKm?: number | null
   size?: 'default' | 'lg'
   onSelect: (id: string) => void
   className?: string
 }) {
   const locale = getLocale()
   const { station } = stop
-  const offset =
-    stop.offsetKm < ON_ROUTE_KM
-      ? m.on_route()
-      : m.off_route({ distance: formatDistance(stop.offsetKm, locale) })
+  const offset = offsetLabel(stop.offsetKm)
 
   return (
     <StationRow
@@ -47,14 +47,30 @@ export function TripStopRow({
       tier={along.tiers.get(station.id) ?? -1}
       star={along.cheapestIds.has(station.id)}
       subtitle={station.city ? `${station.city} · ${offset}` : offset}
-      meta={m.along_km({
-        km: new Intl.NumberFormat(locale).format(Math.round(stop.alongKm)),
-      })}
+      meta={
+        travelledKm != null
+          ? m.in_distance({
+              distance: formatDistance(Math.max(0, stop.alongKm - travelledKm), locale),
+            })
+          : alongKmLabel(stop.alongKm)
+      }
       size={size}
       onSelect={onSelect}
       className={className}
     />
   )
+}
+
+/** "km 84" */
+export function alongKmLabel(km: number) {
+  return m.along_km({ km: new Intl.NumberFormat(getLocale()).format(Math.round(km)) })
+}
+
+/** "On route" / "870 m off route" */
+export function offsetLabel(km: number) {
+  return km < ON_ROUTE_KM
+    ? m.on_route()
+    : m.off_route({ distance: formatDistance(km, getLocale()) })
 }
 
 export function CorridorToggle({ value }: { value: CorridorKm }) {

@@ -6,6 +6,7 @@ import {
   computeFuelStats,
   median,
   stationsAlongRoute,
+  stopsAhead,
   tierFor,
 } from './pricing'
 import type { Station } from './stations'
@@ -124,3 +125,18 @@ describe('cheapestAlongRoute', () => {
   })
 })
 
+describe('stopsAhead', () => {
+  const line = indexRoute([
+    [-74, 45],
+    [-73, 45],
+  ])
+  const early = station('A', 170, -73.9, 45) // ~7.9 km in
+  const late = station('A', 180, -73.2, 45) // ~63 km in
+  const along = cheapestAlongRoute(stationsAlongRoute([early, late], line, 5), 'regular', 5)
+
+  it('drops stations already passed, with a little slack', () => {
+    expect(stopsAhead(along, 0).map((c) => c.station.id)).toEqual([early.id, late.id])
+    expect(stopsAhead(along, 8).map((c) => c.station.id)).toEqual([early.id, late.id])
+    expect(stopsAhead(along, 9).map((c) => c.station.id)).toEqual([late.id])
+  })
+})

@@ -254,3 +254,11 @@ export function cheapestAlongRoute(
     cheapestIds,
   }
 }
+
+/** A station this far behind still counts as ahead: GPS lag, a slip road. */
+const BEHIND_SLACK_KM = 0.3
+
+/** Drive mode on a trip: the candidates not yet passed, cheapest first. */
+export function stopsAhead(along: AlongRoute, travelledKm: number) {
+  return along.candidates.filter((c) => c.alongKm >= travelledKm - BEHIND_SLACK_KM)
+}

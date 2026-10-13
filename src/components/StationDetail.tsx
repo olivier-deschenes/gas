@@ -3,7 +3,9 @@ import { DirectionsButton } from '#/components/DirectionsButton'
 import { RegionStar, TierBar } from '#/components/TierMark'
 import { Button } from '#/components/ui/button'
 import { useSelector } from '@tanstack/react-store'
+import { alongKmLabel, offsetLabel } from '#/components/TripParts'
 import { useAppSearch, useSetSearch } from '#/hooks/use-app-search'
+import { useTrip } from '#/hooks/use-trip'
 import { useFuelStats, useStations } from '#/hooks/use-stations'
 import { formatCents, formatPrice } from '#/lib/format'
 import { distanceKm, formatDistance } from '#/lib/geo'
@@ -21,8 +23,11 @@ export function StationDetail({ id, children }: { id: string; children?: React.R
   const stats = useFuelStats(fuel)
   const locale = getLocale()
   const fix = useSelector(locationStore, (s) => s.fix)
+  const trip = useTrip()
 
   const station = byId.get(id)
+  // Its place on the trip, when it's in the corridor.
+  const stop = trip.along?.candidates.find((c) => c.station.id === id)
   if (!station) return null
 
   const price = station.prices[fuel]
@@ -41,7 +46,12 @@ export function StationDetail({ id, children }: { id: string; children?: React.R
           {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
           <p className="text-xs text-muted-foreground">
             {station.address}
-            {fix && (
+            {stop ? (
+              <span className="tabular-nums">
+                {' · '}
+                {alongKmLabel(stop.alongKm)} · {offsetLabel(stop.offsetKm)}
+              </span>
+            ) : fix && (
               <span className="tabular-nums">
                 {' · '}
                 {formatDistance(distanceKm(fix, station), locale)}{' '}
@@ -114,7 +124,7 @@ export function StationDetail({ id, children }: { id: string; children?: React.R
           </div>
         )}
         {children}
-        <DirectionsButton to={station} />
+        <DirectionsButton to={station} then={stop ? (trip.destination ?? undefined) : undefined} />
       </div>
     </section>
   )

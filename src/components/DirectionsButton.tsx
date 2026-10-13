@@ -13,6 +13,7 @@ import {
   navAppLabel,
   preferredNavApp,
   rememberNavApp,
+  supportsStops,
 } from '#/lib/directions'
 import { cn } from '#/lib/utils'
 import { getLocale } from '#/paraglide/runtime'
@@ -22,10 +23,13 @@ import type { LngLat } from '#/lib/geo'
 
 export function DirectionsButton({
   to,
+  then,
   size = 'default',
   className,
 }: {
   to: LngLat
+  /** On a trip: stop at `to` on the way here, where the app allows it. */
+  then?: LngLat
   size?: 'default' | 'lg'
   className?: string
 }) {
@@ -36,14 +40,15 @@ export function DirectionsButton({
   const open = (choice: NavApp) => {
     rememberNavApp(choice)
     setApp(choice)
-    window.open(directionsUrl(choice, to), '_blank', 'noopener')
+    window.open(directionsUrl(choice, to, then), '_blank', 'noopener')
   }
+  const asStop = then != null && supportsStops(app)
 
   return (
     <div className={cn('flex', className)}>
       <Button className={cn('flex-1', height)} onClick={() => open(app)}>
         <IconNavigation />
-        {m.directions()}
+        {asStop ? m.directions_stop() : m.directions()}
         <span className="font-normal opacity-60">· {navAppLabel(app, locale)}</span>
       </Button>
       <DropdownMenu>

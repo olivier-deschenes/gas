@@ -23,11 +23,15 @@ refreshed every few minutes).
 - **Trip** — pick a destination (and optionally a start other than your
   location) to see the cheapest stations within 1 / 2 / 5 km of the driving
   route, coloured against each other, with how far along the trip and how far
-  off the road each one is. Sort by price or by route order.
+  off the road each one is. Sort by price or by route order. In drive mode the
+  card counts down the distance to stations still ahead and offers to reroute
+  if you leave the route.
 - **Regions** — each region on one province-wide scale (range, median, lowest
   price) against the Quebec median; tap one to frame it on the map.
 - **Directions** — open the station in Apple Maps, Google Maps or Waze (last
-  choice remembered).
+  choice remembered). On a trip, Apple Maps and Google Maps get the station as
+  a stop on the way to the destination; Waze links take one destination, so
+  they go to the station.
 - French (default) and English, light and dark themes, installable to the home
   screen.
 
