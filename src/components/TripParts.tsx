@@ -14,7 +14,7 @@ import { CORRIDORS_KM, setCorridor } from '#/stores/trip'
 import { getLocale } from '#/paraglide/runtime'
 import { m } from '#/paraglide/messages'
 import type { Trip } from '#/hooks/use-trip'
-import type { AlongRoute, RouteCandidate } from '#/lib/pricing'
+import type { AlongRoute, RouteCandidate, RouteStop } from '#/lib/pricing'
 import type { CorridorKm } from '#/stores/trip'
 
 /** Closer than this reads as "on the route" rather than a distance off it. */
@@ -23,6 +23,7 @@ const ON_ROUTE_KM = 0.25
 export function TripStopRow({
   stop,
   along,
+  detours,
   travelledKm,
   size,
   onSelect,
@@ -30,6 +31,7 @@ export function TripStopRow({
 }: {
   stop: RouteCandidate
   along: AlongRoute
+  detours: Trip['detours']
   /** Drive mode: show the distance still to go instead of the trip km. */
   travelledKm?: number | null
   size?: 'default' | 'lg'
@@ -38,7 +40,7 @@ export function TripStopRow({
 }) {
   const locale = getLocale()
   const { station } = stop
-  const offset = offsetLabel(stop.offsetKm)
+  const offset = offsetLabel(stop, detours)
 
   return (
     <StationRow
@@ -66,11 +68,18 @@ export function alongKmLabel(km: number) {
   return m.along_km({ km: new Intl.NumberFormat(getLocale()).format(Math.round(km)) })
 }
 
-/** "On route" / "870 m off route" */
-export function offsetLabel(km: number) {
-  return km < ON_ROUTE_KM
+/**
+ * "4 min detour" when the real detour is known, else "870 m off route";
+ * "On route" when either is negligible.
+ */
+export function offsetLabel(stop: RouteStop, detours: Trip['detours']) {
+  const minutes = detours?.get(stop.station.id)
+  if (minutes != null) {
+    return minutes < 1 ? m.on_route() : m.detour({ minutes: Math.round(minutes) })
+  }
+  return stop.offsetKm < ON_ROUTE_KM
     ? m.on_route()
-    : m.off_route({ distance: formatDistance(km, getLocale()) })
+    : m.off_route({ distance: formatDistance(stop.offsetKm, getLocale()) })
 }
 
 export function CorridorToggle({ value }: { value: CorridorKm }) {

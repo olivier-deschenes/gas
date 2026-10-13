@@ -1,6 +1,6 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 import { searchPlaces } from './places'
-import { RouteError, fetchRoute } from './routing'
+import { RouteError, fetchDetours, fetchRoute } from './routing'
 import type { LngLat } from './geo'
 
 /** ~10 m: GPS jitter at the start point shouldn't fetch a new route. */
@@ -29,5 +29,24 @@ export function placesQueryOptions(query: string, locale: string, near: LngLat |
     enabled: q.length >= 2,
     staleTime: Infinity,
     placeholderData: keepPreviousData,
+  })
+}
+
+/** Detour minutes for the given stations, keyed by station id. */
+export function detoursQueryOptions(
+  from: LngLat | null,
+  to: LngLat | null,
+  stops: ReadonlyArray<LngLat & { id: string }>,
+) {
+  return queryOptions({
+    queryKey: ['detours', routeKey(from), routeKey(to), stops.map((s) => s.id)],
+    queryFn: async ({ signal }) => {
+      const minutes = await fetchDetours(from!, to!, stops, signal)
+      return new Map(stops.map((s, i) => [s.id, minutes[i]]))
+    },
+    enabled: from != null && to != null && stops.length > 0,
+    staleTime: Infinity,
+    gcTime: 30 * 60_000,
+    retry: 1,
   })
 }

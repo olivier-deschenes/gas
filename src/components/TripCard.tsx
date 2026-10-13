@@ -92,6 +92,7 @@ export function TripCard({ collapsed = false }: { collapsed?: boolean }) {
               key={stop.station.id}
               stop={stop}
               along={along}
+              detours={trip.detours}
               travelledKm={travelledKm}
               size={driving ? 'lg' : 'default'}
               onSelect={(id) => setSearch({ station: id })}

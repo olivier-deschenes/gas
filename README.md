@@ -22,8 +22,10 @@ refreshed every few minutes).
   region filter.
 - **Trip** — pick a destination (and optionally a start other than your
   location) to see the cheapest stations within 1 / 2 / 5 km of the driving
-  route, coloured against each other, with how far along the trip and how far
-  off the road each one is. Sort by price or by route order. In drive mode the
+  route, coloured against each other, with how far along the trip each one is
+  and the real extra driving time to stop there (for the ten cheapest; the
+  rest show their straight-line distance off the route). Sort by price or by
+  route order. In drive mode the
   card counts down the distance to stations still ahead and offers to reroute
   if you leave the route.
 - **Regions** — each region on one province-wide scale (range, median, lowest

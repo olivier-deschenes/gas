@@ -5,13 +5,16 @@ import { useAppSearch, useSetSearch } from '#/hooks/use-app-search'
 import { useStations } from '#/hooks/use-stations'
 import { formatLatLng, locateOnRoute, parseLatLng } from '#/lib/geo'
 import { cheapestAlongRoute, stationsAlongRoute } from '#/lib/pricing'
-import { routeQueryOptions } from '#/lib/trip.query'
+import { detoursQueryOptions, routeQueryOptions } from '#/lib/trip.query'
 import { locateOnce, locationStore } from '#/stores/location'
 import { MAX_CORRIDOR_KM, setTripStart, tripStore } from '#/stores/trip'
 import type { RouteLine } from '#/lib/geo'
 import type { AlongRoute, RouteStop } from '#/lib/pricing'
 import type { Place } from '#/lib/places'
 import type { Fuel, Station } from '#/lib/stations'
+
+/** One table request covers this many of the cheapest stations. */
+const DETOUR_COUNT = 10
 
 // Shared by the map, card and list; compute once per route and dataset.
 const stopsCache = new WeakMap<ReadonlyArray<Station>, WeakMap<RouteLine, Array<RouteStop>>>()
@@ -50,6 +53,14 @@ export function useTrip() {
   const route = useQuery(routeQueryOptions(origin, destination))
   const line = route.data?.line ?? null
   const along = line ? getAlong(getStops(stations, line), fuel, corridorKm) : null
+  // Real detours for the cheapest few; the rest keep the straight-line offset.
+  const detours = useQuery(
+    detoursQueryOptions(
+      origin,
+      destination,
+      along?.candidates.slice(0, DETOUR_COUNT).map((c) => c.station) ?? [],
+    ),
+  ).data
 
   return {
     active: destination != null,
@@ -60,6 +71,8 @@ export function useTrip() {
     fromMyLocation: !from,
     route,
     along,
+    /** Extra driving minutes to stop there, by station id, when known. */
+    detours,
     corridorKm,
   }
 }

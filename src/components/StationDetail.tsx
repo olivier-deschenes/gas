@@ -49,7 +49,7 @@ export function StationDetail({ id, children }: { id: string; children?: React.R
             {stop ? (
               <span className="tabular-nums">
                 {' · '}
-                {alongKmLabel(stop.alongKm)} · {offsetLabel(stop.offsetKm)}
+                {alongKmLabel(stop.alongKm)} · {offsetLabel(stop, trip.detours)}
               </span>
             ) : fix && (
               <span className="tabular-nums">

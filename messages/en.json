@@ -97,5 +97,6 @@
   "directions_stop": "Stop on the way",
   "in_distance": "in {distance}",
   "off_route_notice": "You're off the route.",
-  "reroute": "Reroute from here"
+  "reroute": "Reroute from here",
+  "detour": "{minutes} min detour"
 }

@@ -130,6 +130,7 @@ export function TripPanel() {
               key={stop.station.id}
               stop={stop}
               along={along}
+              detours={trip.detours}
               onSelect={(id) => setSearch({ station: id, view: 'map' })}
               className={stop.station.id === selected ? 'border-b bg-muted' : 'border-b'}
             />

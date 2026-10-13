@@ -97,5 +97,6 @@
   "directions_stop": "Arrêt en route",
   "in_distance": "dans {distance}",
   "off_route_notice": "Vous êtes hors du trajet.",
-  "reroute": "Recalculer d'ici"
+  "reroute": "Recalculer d'ici",
+  "detour": "Détour de {minutes} min"
 }
