@@ -27,7 +27,8 @@ import {
   selectedLayer,
   starLayer,
 } from './layers'
-import { brightenHighways, drawPill, readPalette } from './palette'
+import { drawPill, readPalette } from './palette'
+import { styleHighways } from './highways'
 import { UserMarker } from './UserMarker'
 
 const STYLES = {
@@ -208,11 +209,11 @@ export function StationMap() {
         // Bearing is ours to set (heading-up); two-finger twists only zoom.
         e.target.touchZoomRotate.disableRotation()
         addPills(e.target)
-        brightenHighways(e.target)
+        styleHighways(e.target)
         // A theme switch swaps the style, which drops custom images and paint.
         e.target.on('style.load', () => {
           addPills(e.target)
-          brightenHighways(e.target)
+          styleHighways(e.target)
         })
         syncView(e)
         setLoaded(true)
